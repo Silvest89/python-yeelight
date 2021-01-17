@@ -540,7 +540,7 @@ class Bulb(object):
 
         except socket.error as ex:
             _LOGGER.error(ex)
-            raise BulbException(ex)
+            return None
         finally:
             # Don't unassign socket when testing. This breaks the tests
             if self.__socket is not None and not self._music_mode and hasattr(self.__socket, "close"):
@@ -554,7 +554,8 @@ class Bulb(object):
             return {"id": 1, "result": ["ok"]}
 
         if response and "error" in response:
-            raise BulbException(response["error"])
+            _LOGGER.error(response["error"])
+            return None
 
         return response
 
