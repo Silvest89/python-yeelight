@@ -19,7 +19,7 @@ class PowerMode(IntEnum):
     MOONLIGHT = 5
 
 
-class BulbType(Enum):
+class BulbType(IntEnum):
     """
     The bulb's type.
 
