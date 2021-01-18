@@ -526,7 +526,6 @@ class Bulb(object):
         :return List of property values.
         """
 
-            _LOGGER.debug("miIO: %s > %s > %s", self, property_getter, properties)
             _props = properties.copy()
             values = []
             while _props:
