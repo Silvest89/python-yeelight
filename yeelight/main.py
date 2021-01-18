@@ -18,6 +18,7 @@ from .ssdp_discover import parse_capabilities
 from .ssdp_discover import send_discovery_packet
 from .utils import _clamp
 from .utils import rgb_to_yeelight
+from ...python_miio.miio.miioprotocol import MiIOProtocol
 
 
 try:
@@ -190,7 +191,7 @@ class BulbException(Exception):
 
 class Bulb(object):
     def __init__(
-        self, ip, port=55443, effect="smooth", duration=300, auto_on=False, power_mode=PowerMode.LAST, model=None
+        self, ip, port=55443, effect="smooth", duration=300, auto_on=False, power_mode=PowerMode.LAST, model=None, miio_token=None
     ):
         """
         The main controller class of a physical YeeLight bulb.
@@ -226,6 +227,11 @@ class Bulb(object):
         self.auto_on = auto_on
         self.power_mode = power_mode
         self._model = model
+        self._miio_token = miio_token
+    
+        self._milo_enabled = True if miio_token is not None else False
+        if (miio_token is not None):
+            self._milo = MiIOProtocol(ip, miio_token, 0, 0, True)
 
         self.__cmd_id = 0  # The last command id we used.
         self._last_properties = {}  # The last set of properties we've seen.
@@ -452,7 +458,7 @@ class Bulb(object):
             "nl_br",
             "active_mode",
         ],
-        ssdp_fallback=True,
+        ssdp_fallback=False,
     ):
         """
         Retrieve and return the properties of the bulb.
@@ -476,14 +482,24 @@ class Bulb(object):
         if self._music_mode:
             return self._last_properties
 
-        response = self.send_command("get_prop", requested_properties)
-        if response is not None and "result" in response:
-            properties = response["result"]
-            properties = [x if x else None for x in properties]
-            self._last_properties = dict(zip(requested_properties, properties))
-        elif ssdp_fallback:
-            capabilities = self.get_capabilities()
-            self._last_properties = {k: capabilities[k] for k in requested_properties if k in capabilities}
+        properties = None
+        if (self._milo_enabled):
+            response = self.get_milo_properties(requested_properties)
+            properties = list(map(lambda x: x if x != "" else None, response))
+        else:
+            response = self.send_command("get_prop", requested_properties)
+            if response is not None and "result" in response:
+                properties = response["result"]
+                properties = [x if x else None for x in properties]
+            elif ssdp_fallback:
+                capabilities = self.get_capabilities()
+                properties = {k: capabilities[k] for k in requested_properties if k in capabilities}
+
+
+        if (properties is None):
+            return self._last_properties
+
+        self._last_properties = dict(zip(requested_properties, properties))
 
         if self._last_properties.get("power") == "off":
             cb = "0"
@@ -498,7 +514,85 @@ class Bulb(object):
 
         return self._last_properties
 
+    def get_milo_properties(
+            self, properties, *, property_getter="get_prop", max_properties=None
+        ):
+            """Request properties in slices based on given max_properties.
+        This is necessary as some devices have limitation on how many
+        properties can be queried at once.
+        If `max_properties` is None, all properties are requested at once.
+        :param list properties: List of properties to query from the device.
+        :param int max_properties: Number of properties that can be requested at once.
+        :return List of property values.
+        """
+
+            _LOGGER.debug("miIO: %s > %s > %s", self, property_getter, properties)
+            _props = properties.copy()
+            values = []
+            while _props:
+                values.extend(self.send_using_miio(property_getter, _props[:max_properties]))
+                if max_properties is None:
+                    break
+    
+                _props[:] = _props[max_properties:]
+    
+            properties_count = len(properties)
+            values_count = len(values)
+            if properties_count != values_count:
+                _LOGGER.debug(
+                    "Count (%s) of requested properties does not match the "
+                    "count (%s) of received values.",
+                    properties_count,
+                    values_count,
+                )
+    
+            return values
+
+
     def send_command(self, method, params=None):
+        """
+        Send a command to the bulb.
+
+        :param str method:  The name of the method to send.
+        :param list params: The list of parameters for the method.
+
+        :raises BulbException: When the bulb indicates an error condition.
+        :returns: The response from the bulb.
+        """
+
+        if (self._milo_enabled):
+            return self.send_using_miio(method, params)
+
+        return self.send_using_lan_control(method, params)
+
+
+    def send_using_miio(
+        self,
+        command: str,
+        parameters = None,
+        retry_count: int = None,
+        *,
+        extra_parameters=None,
+    ):
+        """Send a command to the device.
+       Basic format of the request:
+       {"id": 1234, "method": command, "parameters": parameters}
+       `extra_parameters` allows passing elements to the top-level of the request.
+       This is necessary for some devices, such as gateway devices, which expect
+       the sub-device identifier to be on the top-level.
+       :param str command: Command to send
+       :param dict parameters: Parameters to send
+       :param int retry_count: How many times to retry on error
+       :param dict extra_parameters: Extra top-level parameters
+       """
+        _LOGGER.debug("miIO: %s > %s > %s", self, command, parameters)
+        retry_count = retry_count if retry_count is not None else 1
+        return self._milo.send(
+            command, parameters, retry_count, extra_parameters=extra_parameters
+        )
+
+
+    def send_using_lan_control(self, method, params=None):
         """
         Send a command to the bulb.
 
@@ -510,8 +604,7 @@ class Bulb(object):
         """
         command = {"id": self._cmd_id, "method": method, "params": params}
 
-        _LOGGER.debug("%s > %s", self, command)
-
+        _LOGGER.debug("LAN Control: %s > %s", self, command)
         response = None
         try:
             self._socket.send((json.dumps(command) + "\r\n").encode("utf8"))
