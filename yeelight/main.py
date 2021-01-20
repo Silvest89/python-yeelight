@@ -482,6 +482,8 @@ class Bulb(object):
         if self._music_mode:
             return self._last_properties
 
+        _LOGGER.debug("Milo: %s, SSDP: %s", self._milo_enabled, ssdp_fallback)
+
         properties = None
         if (self._milo_enabled):
             response = self.get_milo_properties(requested_properties)
@@ -620,7 +622,7 @@ class Bulb(object):
 
                 try:
                     line = json.loads(line.decode("utf8"))
-                    _LOGGER.debug("%s < %s", self, line)
+                    _LOGGER.debug("Response: %s < %s", self, line)
                 except ValueError:
                     line = {"result": ["invalid command"]}
 
