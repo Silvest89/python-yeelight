@@ -191,7 +191,15 @@ class BulbException(Exception):
 
 class Bulb(object):
     def __init__(
-        self, ip, port=55443, effect="smooth", duration=300, auto_on=False, power_mode=PowerMode.LAST, model=None, miio_token=None
+        self,
+        ip,
+        port=55443,
+        effect="smooth",
+        duration=300,
+        auto_on=False,
+        power_mode=PowerMode.LAST,
+        model=None,
+        miio_token=None,
     ):
         """
         The main controller class of a physical YeeLight bulb.
@@ -614,32 +622,32 @@ class Bulb(object):
                 # We're in music mode, nothing else will happen.
                 return {"result": ["ok"]}
 
-            data = self._socket.recv(16 * 1024)
+            while response is None:
+                data = self._socket.recv(16 * 1024)
 
-            for line in data.split(b"\r\n"):
-                if not line:
-                    continue
+                for line in data.split(b"\r\n"):
+                    if not line:
+                        continue
 
-                try:
-                    line = json.loads(line.decode("utf8"))
-                    _LOGGER.debug("Response: %s < %s", self, line)
-                except ValueError:
-                    line = {"result": ["invalid command"]}
+                    try:
+                        line = json.loads(line.decode("utf8"))
+                        _LOGGER.debug("Response: %s < %s", self, line)
+                    except ValueError:
+                        line = {"result": ["invalid command"]}
 
-                if line.get("method") != "props":
-                    # This is probably the response we want.
-                    response = line
-                else:
-                    self._last_properties.update(line["params"])
+                    if line.get("method") != "props":
+                        # This is probably the response we want.
+                        response = line
+                    else:
+                        self._last_properties.update(line["params"])
 
         except socket.error as ex:
             _LOGGER.error(ex)
-            return None
-        finally:
             # Don't unassign socket when testing. This breaks the tests
             if self.__socket is not None and not self._music_mode and hasattr(self.__socket, "close"):
                 self.__socket.close()
                 self.__socket = None
+            return None
 
         if method == "set_music" and params == [0] and "error" in response and response["error"]["code"] == -5000:
             # The bulb seems to throw an error for no reason when stopping music mode,
