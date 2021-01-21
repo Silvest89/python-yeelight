@@ -20,7 +20,6 @@ from .utils import _clamp
 from .utils import rgb_to_yeelight
 from ...python_miio.miio.miioprotocol import MiIOProtocol
 
-
 try:
     from urllib.parse import urlparse
 except ImportError:
@@ -29,29 +28,190 @@ except ImportError:
 _LOGGER = logging.getLogger(__name__)
 
 _MODEL_SPECS = {
-    "bslamp1": {"color_temp": {"min": 1700, "max": 6500}, "night_light": False, "background_light": False},
-    "bslamp2": {"color_temp": {"min": 1700, "max": 6500}, "night_light": True, "background_light": False},
-    "ceil26": {"color_temp": {"min": 2700, "max": 6500}, "night_light": True, "background_light": False},
-    "ceiling10": {"color_temp": {"min": 2700, "max": 6500}, "night_light": True, "background_light": True},
-    "ceiling13": {"color_temp": {"min": 2700, "max": 6500}, "night_light": True, "background_light": False},
-    "ceiling15": {"color_temp": {"min": 2700, "max": 6500}, "night_light": True, "background_light": False},
-    "ceiling19": {"color_temp": {"min": 2700, "max": 6500}, "night_light": True, "background_light": True},
-    "ceiling1": {"color_temp": {"min": 2700, "max": 6500}, "night_light": True, "background_light": False},
-    "ceiling20": {"color_temp": {"min": 2700, "max": 6500}, "night_light": True, "background_light": True},
-    "ceiling2": {"color_temp": {"min": 2700, "max": 6500}, "night_light": True, "background_light": False},
-    "ceiling3": {"color_temp": {"min": 2700, "max": 6500}, "night_light": True, "background_light": False},
-    "ceiling4": {"color_temp": {"min": 2700, "max": 6500}, "night_light": True, "background_light": True},
-    "ceiling5": {"color_temp": {"min": 2700, "max": 5700}, "night_light": True, "background_light": False},
-    "ceiling6": {"color_temp": {"min": 2700, "max": 6500}, "night_light": True, "background_light": False},
-    "color1": {"color_temp": {"min": 1700, "max": 6500}, "night_light": False, "background_light": False},
-    "color2": {"color_temp": {"min": 2700, "max": 6500}, "night_light": False, "background_light": False},
-    "color4": {"color_temp": {"min": 1700, "max": 6500}, "night_light": False, "background_light": False},
-    "color": {"color_temp": {"min": 1700, "max": 6500}, "night_light": False, "background_light": False},
-    "ct_bulb": {"color_temp": {"min": 2700, "max": 6500}, "night_light": False, "background_light": False},
-    "lamp4": {"color_temp": {"min": 2600, "max": 5000}, "night_light": False, "background_light": False},
-    "mono1": {"color_temp": {"min": 2700, "max": 2700}, "night_light": False, "background_light": False},
-    "mono": {"color_temp": {"min": 2700, "max": 2700}, "night_light": False, "background_light": False},
-    "strip1": {"color_temp": {"min": 1700, "max": 6500}, "night_light": False, "background_light": False},
+    "bslamp1": {
+        "color_temp": {
+            "min": 1700,
+            "max": 6500
+        },
+        "night_light": False,
+        "background_light": False
+    },
+    "bslamp2": {
+        "color_temp": {
+            "min": 1700,
+            "max": 6500
+        },
+        "night_light": True,
+        "background_light": False
+    },
+    "ceil26": {
+        "color_temp": {
+            "min": 2700,
+            "max": 6500
+        },
+        "night_light": True,
+        "background_light": False
+    },
+    "ceiling10": {
+        "color_temp": {
+            "min": 2700,
+            "max": 6500
+        },
+        "night_light": True,
+        "background_light": True
+    },
+    "ceiling13": {
+        "color_temp": {
+            "min": 2700,
+            "max": 6500
+        },
+        "night_light": True,
+        "background_light": False
+    },
+    "ceiling15": {
+        "color_temp": {
+            "min": 2700,
+            "max": 6500
+        },
+        "night_light": True,
+        "background_light": False
+    },
+    "ceiling19": {
+        "color_temp": {
+            "min": 2700,
+            "max": 6500
+        },
+        "night_light": True,
+        "background_light": True
+    },
+    "ceiling1": {
+        "color_temp": {
+            "min": 2700,
+            "max": 6500
+        },
+        "night_light": True,
+        "background_light": False
+    },
+    "ceiling20": {
+        "color_temp": {
+            "min": 2700,
+            "max": 6500
+        },
+        "night_light": True,
+        "background_light": True
+    },
+    "ceiling2": {
+        "color_temp": {
+            "min": 2700,
+            "max": 6500
+        },
+        "night_light": True,
+        "background_light": False
+    },
+    "ceiling3": {
+        "color_temp": {
+            "min": 2700,
+            "max": 6500
+        },
+        "night_light": True,
+        "background_light": False
+    },
+    "ceiling4": {
+        "color_temp": {
+            "min": 2700,
+            "max": 6500
+        },
+        "night_light": True,
+        "background_light": True
+    },
+    "ceiling5": {
+        "color_temp": {
+            "min": 2700,
+            "max": 5700
+        },
+        "night_light": True,
+        "background_light": False
+    },
+    "ceiling6": {
+        "color_temp": {
+            "min": 2700,
+            "max": 6500
+        },
+        "night_light": True,
+        "background_light": False
+    },
+    "color1": {
+        "color_temp": {
+            "min": 1700,
+            "max": 6500
+        },
+        "night_light": False,
+        "background_light": False
+    },
+    "color2": {
+        "color_temp": {
+            "min": 2700,
+            "max": 6500
+        },
+        "night_light": False,
+        "background_light": False
+    },
+    "color4": {
+        "color_temp": {
+            "min": 1700,
+            "max": 6500
+        },
+        "night_light": False,
+        "background_light": False
+    },
+    "color": {
+        "color_temp": {
+            "min": 1700,
+            "max": 6500
+        },
+        "night_light": False,
+        "background_light": False
+    },
+    "ct_bulb": {
+        "color_temp": {
+            "min": 2700,
+            "max": 6500
+        },
+        "night_light": False,
+        "background_light": False
+    },
+    "lamp4": {
+        "color_temp": {
+            "min": 2600,
+            "max": 5000
+        },
+        "night_light": False,
+        "background_light": False
+    },
+    "mono1": {
+        "color_temp": {
+            "min": 2700,
+            "max": 2700
+        },
+        "night_light": False,
+        "background_light": False
+    },
+    "mono": {
+        "color_temp": {
+            "min": 2700,
+            "max": 2700
+        },
+        "night_light": False,
+        "background_light": False
+    },
+    "strip1": {
+        "color_temp": {
+            "min": 1700,
+            "max": 6500
+        },
+        "night_light": False,
+        "background_light": False
+    },
 }
 
 
@@ -82,18 +242,18 @@ def _command(f, *args, **kw):
         method = "bg_" + method
 
     if method in [
-        "set_ct_abx",
-        "set_rgb",
-        "set_hsv",
-        "set_bright",
-        "set_power",
-        "toggle",
-        "bg_set_ct_abx",
-        "bg_set_rgb",
-        "bg_set_hsv",
-        "bg_set_bright",
-        "bg_set_power",
-        "bg_toggle",
+            "set_ct_abx",
+            "set_rgb",
+            "set_hsv",
+            "set_bright",
+            "set_power",
+            "toggle",
+            "bg_set_ct_abx",
+            "bg_set_rgb",
+            "bg_set_hsv",
+            "bg_set_bright",
+            "bg_set_power",
+            "bg_toggle",
     ]:
         if self._music_mode:
             # Mapping calls to their properties.
@@ -112,25 +272,34 @@ def _command(f, *args, **kw):
             }
             # Handle toggling separately, as it depends on a previous power state.
             if method == "toggle":
-                self._last_properties["power"] = "on" if self._last_properties["power"] == "off" else "off"
+                self._last_properties["power"] = "on" if self._last_properties[
+                    "power"] == "off" else "off"
             if method == "bg_toggle":
-                self._last_properties["bg_power"] = "on" if self._last_properties["bg_power"] == "off" else "off"
+                self._last_properties[
+                    "bg_power"] = "on" if self._last_properties[
+                        "bg_power"] == "off" else "off"
             # dev_toggle toggle both lights depending on the MAIN light power status.
             if method == "dev_toggle":
-                new_state = "on" if self._last_properties["power"] == "off" else "off"
+                new_state = "on" if self._last_properties[
+                    "power"] == "off" else "off"
                 self._last_properties["power"] = new_state
                 self._last_properties["bg_power"] = new_state
             elif method in action_property_map:
                 set_prop = action_property_map[method]
-                update_props = {set_prop[prop]: params[prop] for prop in range(len(set_prop))}
+                update_props = {
+                    set_prop[prop]: params[prop]
+                    for prop in range(len(set_prop))
+                }
                 _LOGGER.debug("Music mode cache update: %s", update_props)
                 self._last_properties.update(update_props)
         # Add the effect parameters.
         params += [effect, duration]
         # Add power_mode parameter.
-        if method == "set_power" and params[0] == "on" and power_mode.value != PowerMode.LAST:
+        if method == "set_power" and params[
+                0] == "on" and power_mode.value != PowerMode.LAST:
             params += [power_mode.value]
-        if method == "bg_set_power" and params[0] == "on" and power_mode.value != PowerMode.LAST:
+        if method == "bg_set_power" and params[
+                0] == "on" and power_mode.value != PowerMode.LAST:
             params += [power_mode.value]
 
     response = self.send_command(method, params)
@@ -172,7 +341,11 @@ def discover_bulbs(timeout=2, interface=False):
             continue
 
         capabilities = filter_lower_case_keys(capabilities)
-        bulbs.append({"ip": bulb_ip[0], "port": bulb_ip[1], "capabilities": capabilities})
+        bulbs.append({
+            "ip": bulb_ip[0],
+            "port": bulb_ip[1],
+            "capabilities": capabilities
+        })
         bulb_ips.add(bulb_ip)
 
     return bulbs
@@ -236,7 +409,7 @@ class Bulb(object):
         self.power_mode = power_mode
         self._model = model
         self._miio_token = miio_token
-    
+
         self._milo_enabled = True if miio_token is not None else False
         if (miio_token is not None):
             self._milo = MiIOProtocol(ip, miio_token, 0, 0, True)
@@ -356,16 +529,17 @@ class Bulb(object):
         :rtype: yeelight.BulbType
         :return: The bulb's type.
         """
-        if not self._last_properties or any(name not in self.last_properties for name in ["ct", "rgb"]):
+        if not self._last_properties or any(name not in self.last_properties
+                                            for name in ["ct", "rgb"]):
             return BulbType.Unknown
         if self.last_properties["rgb"] is None and self.last_properties["ct"]:
             if self.last_properties["bg_power"] is not None:
                 return BulbType.WhiteTempMood
             else:
                 return BulbType.WhiteTemp
-        if all(
-            name in self.last_properties and self.last_properties[name] is None for name in ["ct", "rgb", "hue", "sat"]
-        ):
+        if all(name in self.last_properties
+               and self.last_properties[name] is None
+               for name in ["ct", "rgb", "hue", "sat"]):
             return BulbType.White
         else:
             return BulbType.Color
@@ -408,7 +582,8 @@ class Bulb(object):
         """
         try:
             self._is_listening = True
-            self._notification_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._notification_socket = socket.socket(socket.AF_INET,
+                                                      socket.SOCK_STREAM)
             self._notification_socket.setblocking(True)
             self._notification_socket.connect((self._ip, self._port))
             while self._notification_socket is not None:
@@ -493,6 +668,7 @@ class Bulb(object):
         _LOGGER.debug("Milo: %s, SSDP: %s", self._milo_enabled, ssdp_fallback)
 
         properties = None
+        ssdp_used = False
         if (self._milo_enabled):
             response = self.get_milo_properties(requested_properties)
             properties = list(map(lambda x: x if x != "" else None, response))
@@ -503,13 +679,19 @@ class Bulb(object):
                 properties = [x if x else None for x in properties]
             elif ssdp_fallback:
                 capabilities = self.get_capabilities()
-                properties = {k: capabilities[k] for k in requested_properties if k in capabilities}
-
+                properties = {
+                    k: capabilities[k]
+                    for k in requested_properties if k in capabilities
+                }
+                ssdp_used = True
 
         if (properties is None):
             return self._last_properties
 
-        self._last_properties = dict(zip(requested_properties, properties))
+        if (not ssdp_used):
+            self._last_properties = dict(zip(requested_properties, properties))
+        else:
+            self._last_properties = properties
 
         if self._last_properties.get("power") == "off":
             cb = "0"
@@ -524,10 +706,9 @@ class Bulb(object):
 
         return self._last_properties
 
-    def get_milo_properties(
-            self, properties, *, property_getter="get_prop", max_properties=None
-        ):
-            """Request properties in slices based on given max_properties.
+    def get_milo_properties(self, properties, *, property_getter="get_prop",
+                            max_properties=None):
+        """Request properties in slices based on given max_properties.
         This is necessary as some devices have limitation on how many
         properties can be queried at once.
         If `max_properties` is None, all properties are requested at once.
@@ -536,27 +717,27 @@ class Bulb(object):
         :return List of property values.
         """
 
-            _props = properties.copy()
-            values = []
-            while _props:
-                values.extend(self.send_using_miio(property_getter, _props[:max_properties]))
-                if max_properties is None:
-                    break
-    
-                _props[:] = _props[max_properties:]
-    
-            properties_count = len(properties)
-            values_count = len(values)
-            if properties_count != values_count:
-                _LOGGER.debug(
-                    "Count (%s) of requested properties does not match the "
-                    "count (%s) of received values.",
-                    properties_count,
-                    values_count,
-                )
-    
-            return values
+        _props = properties.copy()
+        values = []
+        while _props:
+            values.extend(
+                self.send_using_miio(property_getter, _props[:max_properties]))
+            if max_properties is None:
+                break
 
+            _props[:] = _props[max_properties:]
+
+        properties_count = len(properties)
+        values_count = len(values)
+        if properties_count != values_count:
+            _LOGGER.debug(
+                "Count (%s) of requested properties does not match the "
+                "count (%s) of received values.",
+                properties_count,
+                values_count,
+            )
+
+        return values
 
     def send_command(self, method, params=None):
         """
@@ -574,11 +755,10 @@ class Bulb(object):
 
         return self.send_using_lan_control(method, params)
 
-
     def send_using_miio(
         self,
         command: str,
-        parameters = None,
+        parameters=None,
         retry_count: int = None,
         *,
         extra_parameters=None,
@@ -596,10 +776,8 @@ class Bulb(object):
        """
         _LOGGER.debug("miIO: %s > %s > %s", self, command, parameters)
         retry_count = retry_count if retry_count is not None else 1
-        return self._milo.send(
-            command, parameters, retry_count, extra_parameters=extra_parameters
-        )
-
+        return self._milo.send(command, parameters, retry_count,
+                               extra_parameters=extra_parameters)
 
     def send_using_lan_control(self, method, params=None):
         """
@@ -644,12 +822,15 @@ class Bulb(object):
         except socket.error as ex:
             _LOGGER.error(ex)
             # Don't unassign socket when testing. This breaks the tests
-            if self.__socket is not None and not self._music_mode and hasattr(self.__socket, "close"):
+            if self.__socket is not None and not self._music_mode and hasattr(
+                    self.__socket, "close"):
                 self.__socket.close()
                 self.__socket = None
             return None
 
-        if method == "set_music" and params == [0] and "error" in response and response["error"]["code"] == -5000:
+        if method == "set_music" and params == [
+                0
+        ] and "error" in response and response["error"]["code"] == -5000:
             # The bulb seems to throw an error for no reason when stopping music mode,
             # it doesn't affect operation and we can't do anything about it, so we might
             # as well swallow it.
@@ -672,7 +853,8 @@ class Bulb(object):
         """
         self.ensure_on()
 
-        return ("set_ct_abx", [self._clamp_color_temp(degrees)], dict(kwargs, light_type=light_type))
+        return ("set_ct_abx", [self._clamp_color_temp(degrees)],
+                dict(kwargs, light_type=light_type))
 
     @_command
     def set_rgb(self, red, green, blue, light_type=LightType.Main, **kwargs):
@@ -687,7 +869,8 @@ class Bulb(object):
         """
         self.ensure_on()
 
-        return ("set_rgb", [rgb_to_yeelight(red, green, blue)], dict(kwargs, light_type=light_type))
+        return ("set_rgb", [rgb_to_yeelight(red, green, blue)],
+                dict(kwargs, light_type=light_type))
 
     @_command
     def set_adjust(self, action, prop, **kwargs):
@@ -708,7 +891,8 @@ class Bulb(object):
         return "set_adjust", [action, prop], kwargs
 
     @_command
-    def set_hsv(self, hue, saturation, value=None, light_type=LightType.Main, **kwargs):
+    def set_hsv(self, hue, saturation, value=None, light_type=LightType.Main,
+                **kwargs):
         """
         Set the bulb's HSV value.
 
@@ -727,7 +911,8 @@ class Bulb(object):
 
         if value is None:
             # If no value was passed, use ``set_hsv`` to preserve luminance.
-            return "set_hsv", [hue, saturation], dict(kwargs, light_type=light_type)
+            return "set_hsv", [hue, saturation], dict(kwargs,
+                                                      light_type=light_type)
         else:
             # Otherwise, use flow.
             value = _clamp(value, 0, 100)
@@ -739,8 +924,13 @@ class Bulb(object):
 
             hue = _clamp(hue, 0, 359) / 359.0
             saturation = _clamp(saturation, 0, 100) / 100.0
-            rgb = rgb_to_yeelight(*[int(round(col * 255)) for col in colorsys.hsv_to_rgb(hue, saturation, 1)])
-            return ("start_cf", [1, 1, "%s, 1, %s, %s" % (duration, rgb, value)], dict(kwargs, light_type=light_type))
+            rgb = rgb_to_yeelight(*[
+                int(round(col * 255))
+                for col in colorsys.hsv_to_rgb(hue, saturation, 1)
+            ])
+            return ("start_cf",
+                    [1, 1, "%s, 1, %s, %s" % (duration, rgb, value)],
+                    dict(kwargs, light_type=light_type))
 
     @_command
     def set_brightness(self, brightness, light_type=LightType.Main, **kwargs):
@@ -820,7 +1010,8 @@ class Bulb(object):
 
         self.ensure_on()
 
-        return ("start_cf", flow.as_start_flow_params, dict(kwargs, light_type=light_type))
+        return ("start_cf", flow.as_start_flow_params,
+                dict(kwargs, light_type=light_type))
 
     @_command
     def stop_flow(self, light_type=LightType.Main, **kwargs):
@@ -832,7 +1023,8 @@ class Bulb(object):
         return "stop_cf", [], dict(kwargs, light_type=light_type)
 
     @_command
-    def set_scene(self, scene_class, *args, light_type=LightType.Main, **kwargs):
+    def set_scene(self, scene_class, *args, light_type=LightType.Main,
+                  **kwargs):
         """
         Set the light directly to the specified state.
 
@@ -888,7 +1080,9 @@ class Bulb(object):
         elif scene_class == SceneClass.AUTO_DELAY_OFF:
             scene_args += args
         else:
-            raise ValueError("Scene class argument is unknown. Please use one from yeelight.SceneClass.")
+            raise ValueError(
+                "Scene class argument is unknown. Please use one from yeelight.SceneClass."
+            )
 
         return "set_scene", scene_args, dict(kwargs, light_type=light_type)
 
@@ -912,7 +1106,8 @@ class Bulb(object):
                        Will be discovered automatically if not provided.
         """
         if self._music_mode:
-            raise AssertionError("Already in music mode, please stop music mode first.")
+            raise AssertionError(
+                "Already in music mode, please stop music mode first.")
 
         # Force populating the cache in case we are being called directly
         # without ever fetching properties beforehand
@@ -985,7 +1180,9 @@ class Bulb(object):
         return "cron_del", [event_type.value], kwargs
 
     def __repr__(self):
-        return "Bulb<{ip}:{port}, type={type}>".format(ip=self._ip, port=self._port, type=self.bulb_type)
+        return "Bulb<{ip}:{port}, type={type}>".format(ip=self._ip,
+                                                       port=self._port,
+                                                       type=self.bulb_type)
 
     def set_power_mode(self, mode):
         """
